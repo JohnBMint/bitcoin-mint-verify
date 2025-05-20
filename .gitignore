@@ -1,0 +1,4 @@
+# Python virtual env
+.venv/
+# Flask uploads
+uploads/
