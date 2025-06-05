@@ -1,66 +1,25 @@
 import os
-from flask import Flask, request, render_template_string, redirect, url_for, send_from_directory
-import cv2
-import numpy as np
-import hashlib
-import binascii
-import base58
+from flask import Flask, request, redirect, url_for, send_from_directory, render_template_string
 
-# Disable OpenCL to ensure deterministic behavior
-cv2.ocl.setUseOpenCL(False)
+# We keep cv2 imported only so that Flask starts correctly, but we never call compute_sift_features here.
+import cv2  
 
-# Compute SIFT features
-def compute_sift_features(image_path):
-    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-    if image is None:
-        raise ValueError("Image not loaded properly")
-    image = cv2.equalizeHist(image)
-    sift = cv2.SIFT_create(contrastThreshold=0.04, edgeThreshold=10, nfeatures=200)
-    keypoints, descriptors = sift.detectAndCompute(image, None)
-    if descriptors is None:
-        return np.array([])
-    return descriptors.flatten()
+# (You could remove all of your hashing/SIFT functions from this file if you’d like;
+#  they will live inside your Colab notebook instead.)
 
-# Generate a hash from the feature vector
-def generate_feature_vector_hash(feature_vector):
-    adjustment_counter = 0
-    while True:
-        adjusted = np.roll(feature_vector, adjustment_counter)
-        h = hashlib.sha256(adjusted.tobytes()).hexdigest()[:19]
-        if '0' not in h and 'I' not in h:
-            return h
-        adjustment_counter += 1
-
-# Base58 encoding utilities
-def b58ec(hex_str):
-    data = bytearray.fromhex(hex_str)
-    return base58.b58encode(data).decode('ascii')
-
-def b58dc(enc, trim=0):
-    return base58.b58decode(enc)[:-trim]
-
-def hh256(s):
-    return binascii.hexlify(hashlib.sha256(hashlib.sha256(s).digest()).digest())
-
-def burn(template):
-    decoded = b58dc(template, trim=4)
-    decoded_hex = binascii.hexlify(decoded).decode('ascii')
-    check = hh256(decoded)[:8].decode('ascii')
-    return b58ec(decoded_hex + check)
-
-# Set up upload folder and Flask app
+# Create (if necessary) an uploads/ folder in the current working directory
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Load the minting script for “Copy Minting Script” button
-with open('minting_script.txt') as f:
+# Load the minting script text for “Copy Minting Script” functionality
+with open('minting_script.txt', 'r') as f:
     MINTING_SCRIPT = f.read()
 
-# HTML template with two forms:
-#  - The first (GET) shows just the “Verify in Google Colab” button.
-#  - Once an image is processed, we show the minted address + buttons.
+# A minimal HTML template.  On GET, it only shows the upload form.
+# On POST (after upload), we inject “colab_url” so that the template shows the Google Colab button.
 HTML_TEMPLATE = '''
 <!doctype html>
 <html lang="en">
@@ -68,67 +27,59 @@ HTML_TEMPLATE = '''
   <meta charset="utf-8">
   <title>Verification Tool – The Bitcoin Mint</title>
   <style>
-    body { font-family: serif; margin: 40px; }
+    body { 
+      font-family: serif; 
+      margin: 40px; 
+    }
     input[type=file] { margin-bottom: 20px; }
     .result { margin-top: 30px; }
-    button, .link-button { 
+    button { 
       margin: 5px 10px 5px 0; 
       padding: 8px 16px; 
-      font-family: serif;
-      text-decoration: none;
-      background: #000;
-      color: #fff;
-      border: none;
-      cursor: pointer;
+      font-family: serif; 
     }
     .link-button { 
-      background: transparent; 
+      text-decoration: none; 
       color: #999; 
+      font-family: serif; 
       font-size: 1rem; 
-      border: none; 
-      padding: 0; 
-      margin: 0 1rem 0 0;
+      margin-right: 10px;
     }
-    .link-button:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
   <h1>The Bitcoin Mint Verification Tool</h1>
-
   <form action="/upload_for_colab" method="POST" enctype="multipart/form-data">
     <label for="natural_standard">Choose your Natural Standard image:</label><br>
     <input type="file" name="natural_standard" id="natural_standard" accept="image/*" required><br>
     <button type="submit">Verify in Google Colab</button>
   </form>
 
-  {% if address %}
-  <div class="result">
-    <h2>BTC Mint Address</h2>
-    <p>{{ address }}</p>
+  {% if colab_url %}
+    <div class="result">
+      <h2>Your file has been uploaded!</h2>
+      <p>You can now launch the Colab notebook to run the minting script against your image.</p>
+      <button onclick="copyScript()">Copy Minting Script</button>
+      <a href="https://colab.research.google.com/notebook#create=true&url={{ colab_url }}" 
+         target="_blank" class="link-button">Google Colab</a>
+      <a href="https://ordinals.com/content/efc063a1bc6812f94e278b5f9ea0283e111db3a7ebe2225ca927462a4ce11688i0" 
+         target="_blank" class="link-button">See On-chain Minting Script</a>
 
-    <!-- Copy the local minting_script.txt to clipboard -->
-    <button onclick="copyScript()">Copy Minting Script</button>
-    <!-- Open Colab with the file URL as a query parameter -->
-    <a href="https://colab.research.google.com/?file={{ colab_url }}" target="_blank" class="link-button">Google Colab</a>
-    <!-- Link to on-chain Ordinals script -->
-    <a href="https://ordinals.com/content/efc063a1bc6812f94e278b5f9ea0283e111db3a7ebe2225ca927462a4ce11688i0" 
-       target="_blank" class="link-button">See On-chain Minting Script</a>
+      <h3>Want to verify it independently?</h3>
+      <p>
+        Copy the code below, open a fresh Colab notebook, upload your Natural Standard image there, 
+        set the path accordingly, and run the script to reproduce the BTC‐mint address yourself.
+      </p>
+      <textarea id="script" style="display:none;">{{ minting_script }}</textarea>
+    </div>
 
-    <h3>Want to verify it independently?</h3>
-    <p>
-      Copy the code and paste it into a Google Colab Notebook. Upload the Natural Standard Image 
-      and edit the script so that <code>'THE NATURAL STANDARD IMAGE PATH HERE'</code> matches your uploaded file path. Run the script again.
-    </p>
-    <textarea id="script" style="display:none;">{{ minting_script }}</textarea>
-  </div>
-
-  <script>
-    function copyScript() {
-      const txt = document.getElementById('script').value;
-      navigator.clipboard.writeText(txt);
-      alert('Minting script copied to clipboard');
-    }
-  </script>
+    <script>
+      function copyScript() {
+        const txt = document.getElementById('script').value;
+        navigator.clipboard.writeText(txt);
+        alert('Minting script copied to clipboard');
+      }
+    </script>
   {% endif %}
 </body>
 </html>
@@ -136,41 +87,42 @@ HTML_TEMPLATE = '''
 
 @app.route('/', methods=['GET'])
 def index():
-    # Simply show the form
+    # Just render the upload form (no colab_url yet)
     return render_template_string(HTML_TEMPLATE)
 
 @app.route('/upload_for_colab', methods=['POST'])
 def upload_for_colab():
+    # 1) Save the uploaded file into /uploads
     file = request.files.get('natural_standard')
-    if not file:
-        return redirect(url_for('index'))
+    if file:
+        filename = file.filename
+        save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(save_path)
 
-    # Save the uploaded file to uploads/
-    filename = file.filename
-    path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    file.save(path)
+        # 2) Build a publicly‐accessible URL for this file,
+        #    which the Colab notebook can fetch.
+        #
+        #    We assume that the Flask route /uploads/<filename> will serve it.
+        file_url = request.url_root[:-1] + url_for('uploaded_file', filename=filename)
 
-    # Immediately compute the BTC address for display
-    feature_vector = compute_sift_features(path)
-    hash_hex = generate_feature_vector_hash(feature_vector)
-    address = burn(f"1BtcMint{hash_hex}XXXXXXX")
+        # 3) Render the same template, but now include colab_url so the
+        #    “Google Colab” button appears.  The Colab link itself
+        #    will pass our file_url as a URL‐parameter.
+        return render_template_string(
+            HTML_TEMPLATE,
+            colab_url=file_url,
+            minting_script=MINTING_SCRIPT
+        )
 
-    # Build a public URL to /uploads/<filename>
-    file_url = request.url_root.rstrip('/') + url_for('uploaded_file', filename=filename)
-
-    # Re-render the page, passing address + the Colab URL parameter
-    return render_template_string(
-        HTML_TEMPLATE,
-        address=address,
-        colab_url=file_url,
-        minting_script=MINTING_SCRIPT
-    )
+    # If no file was actually uploaded, just redirect back to GET form
+    return redirect(url_for('index'))
 
 @app.route('/uploads/<path:filename>')
 def uploaded_file(filename):
-    # Serve the uploads/ directory so Colab can fetch it directly
+    # Serve the static file so Colab (and the user’s browser) can retrieve it.
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 if __name__ == '__main__':
+    # In production, Flask’s debug/reloader must remain off.
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
