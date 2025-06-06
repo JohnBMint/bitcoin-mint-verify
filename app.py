@@ -45,7 +45,7 @@ def upload_for_colab():
         # Generate public URL for Colab
         file_url = request.url_root.rstrip('/') + url_for('uploaded_file', filename=filename)
         # Build Colab redirect URL pointing to hosted notebook with image parameter
-        github_notebook = "https://colab.research.google.com/github/YourUser/bitcoin-mint-verify/blob/main/verify.ipynb"
+        github_notebook = "https://colab.research.google.com/github/JohnBMint/bitcoin-mint-verify/blob/main/verify.ipynb"
         colab_link = f"{github_notebook}?url={file_url}"
         return redirect(colab_link)
     return redirect(url_for('index'))
