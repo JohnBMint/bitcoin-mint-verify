@@ -97,15 +97,12 @@ HTML_TEMPLATE = '''
 
   {% if address %}
   <div class="result">
-    <h2>Natural Standard SIFT Keypoints</h2>
-    <p>Detected keypoints: {{ keypoints_count }}</p>
-
     <h2>BTC Mint Address</h2>
     <p>{{ address }}</p>
 
     <button onclick="copyScript()">Copy Minting Script</button>
+    <button onclick="window.open('https://colab.research.google.com/','_blank')" class="link-button">Google Colab</button>
     <a href="https://ordinals.com/content/efc063a1bc6812f94e278b5f9ea0283e111db3a7ebe2225ca927462a4ce11688i0" target="_blank" class="link-button">See On-chain Minting Script</a>
-    <a href="https://colab.research.google.com/" target="_blank" class="link-button">Google Colab</a>
 
     <h3>Want to verify it independently?</h3>
     <p>Copy the code and paste it into a Google Colab Notebook. Upload the Natural Standard Image and edit the script to ensure the 'THE NATURAL STANDARD IMAGE PATH HERE' matches your uploaded file path. Run the script again.</p>
