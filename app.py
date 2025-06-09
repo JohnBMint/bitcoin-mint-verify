@@ -79,12 +79,33 @@ HTML_TEMPLATE = '''
 <head>
   <meta charset="utf-8">
   <title>Verification Tool - The Bitcoin Mint</title>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    body { font-family: serif; margin: 40px; }
+    body {
+        margin: 40px;
+        background-color: #fff;
+        color: #161616;
+        line-height: 1.4;
+        font-family: 'EB Garamond', serif;
+    }
     input[type=file] { margin-bottom: 20px; }
     .result { margin-top: 30px; }
-    button { margin: 5px 10px 5px 0; padding: 8px 16px; font-family: serif; }
-    .link-button { text-decoration: none; color: #999; font-family: serif; font-size: 1rem; }
+    button {
+        margin: 5px 10px 5px 0;
+        padding: 10px 20px;
+        font-size: 1rem;
+        font-family: 'FuturaBold', 'EB Garamond', sans-serif;
+        background-color: #000;
+        color: #fff;
+        border: none;
+        cursor: pointer;
+    }
+    .link-button {
+        text-decoration: none;
+        color: #ccc;
+        font-family: 'EB Garamond', serif;
+        font-size: 1rem;
+    }
   </style>
 </head>
 <body>
