@@ -125,6 +125,7 @@ HTML_TEMPLATE = '''
     <p>Upload the natural standard image to this public Google Colab Notebook and edit the script to ensure the 'THE NATURAL STANDARD IMAGE PATH HERE' matches your uploaded file path. Run the script again and see it translate the unique pattern into a Bitcoin mint address for yourself.</p>
 
     <button onclick="window.open('https://colab.research.google.com/github/JohnBMint/bitcoin-mint-verify/blob/main/verify.ipynb','_blank')" class="link-button">Google Colab</button>
+    <textarea id="script" style="display:none;">{{ minting_script }}</textarea>
   </div>
 </body>
 </html>
