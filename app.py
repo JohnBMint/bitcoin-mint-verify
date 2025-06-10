@@ -127,6 +127,7 @@ HTML_TEMPLATE = '''
     <button onclick="window.open('https://colab.research.google.com/github/JohnBMint/bitcoin-mint-verify/blob/main/verify.ipynb','_blank')" class="link-button">Google Colab</button>
     <textarea id="script" style="display:none;">{{ minting_script }}</textarea>
   </div>
+  {% endif %}
 </body>
 </html>
 '''
