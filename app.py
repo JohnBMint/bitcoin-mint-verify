@@ -121,23 +121,11 @@ HTML_TEMPLATE = '''
     <h2>BTC Mint Address</h2>
     <p>{{ address }}</p>
 
-    <button onclick="copyScript()">Copy Minting Script</button>
-    <button onclick="window.open('https://colab.research.google.com/','_blank')" class="link-button">Google Colab</button>
-    <a href="https://ordinals.com/content/efc063a1bc6812f94e278b5f9ea0283e111db3a7ebe2225ca927462a4ce11688i0" target="_blank" class="link-button">See On-chain Minting Script</a>
-
     <h3>Want to verify it independently?</h3>
-    <p>Copy the code and paste it into a Google Colab Notebook. Upload the Natural Standard Image and edit the script to ensure the 'THE NATURAL STANDARD IMAGE PATH HERE' matches your uploaded file path. Run the script again.</p>
+    <p>Upload the natural standard image to this public Google Colab Notebook and edit the script to ensure the 'THE NATURAL STANDARD IMAGE PATH HERE' matches your uploaded file path. Run the script again and see it translate the unique pattern into a Bitcoin mint address for yourself.</p>
 
-    <textarea id="script" style="display:none;">{{ minting_script }}</textarea>
+    <button onclick="window.open('https://colab.research.google.com/github/JohnBMint/bitcoin-mint-verify/blob/main/verify.ipynb','_blank')" class="link-button">Google Colab</button>
   </div>
-  <script>
-    function copyScript() {
-      const txt = document.getElementById('script').value;
-      navigator.clipboard.writeText(txt);
-      alert('Minting script copied to clipboard');
-    }
-  </script>
-  {% endif %}
 </body>
 </html>
 '''
