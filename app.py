@@ -109,7 +109,7 @@ HTML_TEMPLATE = '''
   </style>
 </head>
 <body>
-  <h1>The Bitcoin Mint Verification Tool</h1>
+  <h1></h1>
   <form method="post" enctype="multipart/form-data">
     <label>Upload Natural Standard Image:</label><br>
     <input type="file" name="file" required><br>
